@@ -1,0 +1,21 @@
+form {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: white;
+}
+
+form h2 {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+form div {
+  margin-bottom: 12px;
+}
+
+form input, form textarea, form select {
+  width: 100%;
+}

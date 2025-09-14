@@ -1,0 +1,15 @@
+.movies-page {
+  padding: 20px;
+}
+
+.movies-filters {
+  margin-bottom: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
