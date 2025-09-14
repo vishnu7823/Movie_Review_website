@@ -21,6 +21,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/users', userRoutes);
 
+app.get('/', (req, res) => {
+  res.send('✅ Movie Review API is running!');
+});
+
+
 // 404 catch
 app.use((req, res, next) => {
   res.status(404);
