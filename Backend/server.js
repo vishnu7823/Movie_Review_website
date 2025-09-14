@@ -9,6 +9,8 @@ const authRoutes = require('./routes/authRoutes');
 const movieRoutes = require('./routes/movieRoutes');
 const userRoutes = require('./routes/userRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
+const adminRoutes = require('./routes/adminRoutes');
+
 
 connectDB();
 
@@ -20,6 +22,8 @@ if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
 app.use('/api/auth', authRoutes);
 app.use('/api/movies', movieRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
+
 
 app.get('/', (req, res) => {
   res.send('✅ Movie Review API is running!');

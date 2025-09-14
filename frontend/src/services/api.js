@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: "http://localhost:5000/api" // backend server
+  baseURL: "https://movie-review-website-2ag7.onrender.com/api" // backend server
 });
 
 api.interceptors.request.use(config => {

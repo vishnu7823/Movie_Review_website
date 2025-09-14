@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import api from '../services/api';
-import ReviewForm from '../components/ReviewForm';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import api from "../services/api";
+import "./MovieDetail.css";
 
-function MovieDetail() {
+function MovieDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [movie, setMovie] = useState(null);
   const [reviews, setReviews] = useState([]);
-  const [inWatchlist, setInWatchlist] = useState(false);
+  const [newReview, setNewReview] = useState({ rating: 0, text: "" });
+  const [recommendations, setRecommendations] = useState([]);
 
   useEffect(() => {
     const fetchMovie = async () => {
@@ -15,107 +17,157 @@ function MovieDetail() {
         const { data } = await api.get(`/movies/${id}`);
         setMovie(data.movie);
         setReviews(data.reviews || []);
-
-        // check if in watchlist
-        const userId = JSON.parse(localStorage.getItem('user'))?._id;
-        if (userId) {
-          const { data: userData } = await api.get(`/users/${userId}`);
-          const found = userData.user.watchlist.find(w => w.movie?._id === id);
-          setInWatchlist(!!found);
-        }
       } catch (err) {
-        console.error('Error fetching movie:', err);
+        console.error("Error fetching movie:", err);
       }
     };
+
+    const fetchRecommendations = async () => {
+      try {
+        const { data } = await api.get(`/movies/${id}/recommendations`);
+        setRecommendations(data);
+      } catch (err) {
+        console.error("Error fetching recommendations:", err);
+      }
+    };
+
     fetchMovie();
+    fetchRecommendations();
   }, [id]);
 
-  const handleNewReview = (review) => {
-    setReviews((prev) => [review, ...prev]);
-    setMovie((prev) => ({
-      ...prev,
-      averageRating:
-        ((prev.averageRating * prev.ratingCount) + review.rating) /
-        (prev.ratingCount + 1),
-      ratingCount: prev.ratingCount + 1,
-    }));
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await api.post(`/movies/${id}/reviews`, newReview);
+      setReviews([data, ...reviews]);
+      setNewReview({ rating: 0, text: "" });
+    } catch (err) {
+      alert("Error posting review");
+    }
   };
 
   const handleAddToWatchlist = async () => {
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      await api.post(`/users/${user._id}/watchlist`, { movieId: id });
-      setInWatchlist(true);
+      await api.post(`/users/watchlist`, { movieId: movie._id });
+      alert("Movie added to watchlist!");
     } catch (err) {
-      alert(err.response?.data?.message || 'Error adding to watchlist');
-    }
-  };
-
-  const handleRemoveFromWatchlist = async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem('user'));
-      await api.delete(`/users/${user._id}/watchlist/${id}`);
-      setInWatchlist(false);
-    } catch (err) {
-      alert(err.response?.data?.message || 'Error removing from watchlist');
+      alert("Error adding movie to watchlist");
     }
   };
 
   if (!movie) return <p>Loading...</p>;
 
   return (
-    <div className="movie-detail" style={{ padding: '20px' }}>
-      <img
-        src={movie.posterUrl || 'https://via.placeholder.com/200x300?text=No+Image'}
-        alt={movie.title}
-        style={{ width: '220px', borderRadius: '8px', marginBottom: '12px' }}
-      />
-      <h2>{movie.title}</h2>
-      <p>{movie.description}</p>
-      <p><strong>Genre:</strong> {movie.genre}</p>
-      <p>
-        <strong>Average Rating:</strong>{' '}
-        {movie.averageRating?.toFixed(1)} ({movie.ratingCount} reviews)
-      </p>
+    <div className="movie-details">
+      {/* Movie Info */}
+      <div className="movie-header">
+        <img
+          src={movie.posterUrl || "https://via.placeholder.com/200x300"}
+          alt={movie.title}
+        />
+        <div className="movie-info">
+          <h2>{movie.title}</h2>
+          <p>
+            <strong>Genre:</strong> {movie.genre}
+          </p>
+          <p>
+            <strong>Director:</strong> {movie.director}
+          </p>
+          <p>
+            <strong>Release Year:</strong> {movie.releaseYear}
+          </p>
+          <p>
+            <strong>Cast:</strong> {movie.cast?.join(", ")}
+          </p>
+          <p>{movie.synopsis}</p>
+          <p>
+            ⭐ {movie.averageRating?.toFixed(1) || "N/A"} (
+            {movie.ratingCount} reviews)
+          </p>
+          <button onClick={handleAddToWatchlist}>+ Add to Watchlist</button>
+        </div>
+      </div>
 
-      {/* ✅ Watchlist button */}
-      {inWatchlist ? (
-        <button onClick={handleRemoveFromWatchlist} style={{ marginTop: '10px' }}>
-          Remove from Watchlist
-        </button>
-      ) : (
-        <button onClick={handleAddToWatchlist} style={{ marginTop: '10px' }}>
-          Add to Watchlist
-        </button>
-      )}
-
-      {/* Review form */}
-      <ReviewForm movieId={movie._id} onReviewAdded={handleNewReview} />
+      {/* Review Form */}
+      <div className="review-form">
+        <h3>Leave a Review</h3>
+        <form onSubmit={handleReviewSubmit}>
+          <label>
+            Rating:
+            <select
+              value={newReview.rating}
+              onChange={(e) =>
+                setNewReview({ ...newReview, rating: Number(e.target.value) })
+              }
+            >
+              <option value="0">Select rating</option>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
+          <textarea
+            placeholder="Write your review..."
+            value={newReview.text}
+            onChange={(e) =>
+              setNewReview({ ...newReview, text: e.target.value })
+            }
+          />
+          <button type="submit">Submit Review</button>
+        </form>
+      </div>
 
       {/* Reviews */}
-      <div className="review-section" style={{ marginTop: '20px' }}>
+      <div className="reviews">
         <h3>Reviews</h3>
         {reviews.length === 0 ? (
-          <p>No reviews yet</p>
+          <p>No reviews yet.</p>
         ) : (
           reviews.map((r) => (
-            <div
-              key={r._id}
-              style={{
-                borderBottom: '1px solid #eee',
-                padding: '10px 0',
-              }}
-            >
-              <p>
+            <div key={r._id} className="review-card">
+              <img
+                src={r.user?.profilePicture || "https://via.placeholder.com/50"}
+                alt={r.user?.username}
+                className="review-avatar"
+              />
+              <div>
                 <strong>{r.user?.username}</strong> ⭐ {r.rating}
-              </p>
-              <p>{r.text}</p>
+                <p>{r.text}</p>
+              </div>
             </div>
           ))
         )}
       </div>
+
+      {/* Recommendations */}
+      {recommendations.length > 0 && (
+        <div className="recommendations">
+          <h3>You may also like</h3>
+          <div className="recommendation-list">
+            {recommendations.map((rec) => (
+              <div
+                key={rec._id}
+                className="recommendation-card"
+                onClick={() => navigate(`/movies/${rec._id}`)}
+              >
+                <img
+                  src={rec.posterUrl || "https://via.placeholder.com/150x220"}
+                  alt={rec.title}
+                />
+                <div className="rec-info">
+                  <h4>{rec.title}</h4>
+                  <p>{rec.genre}</p>
+                  <span>⭐ {rec.averageRating?.toFixed(1) || "N/A"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-export default MovieDetail;
+export default MovieDetails;

@@ -16,6 +16,19 @@ router.get('/genres', async (req, res) => {
   }
 });
 
+router.get('/:id/recommendations', async (req, res) => {
+  const movie = await Movie.findById(req.params.id);
+  if (!movie) return res.status(404).json({ message: 'Movie not found' });
+
+  // Find similar genre movies with high ratings
+  const recommended = await Movie.find({
+    genre: movie.genre,
+    _id: { $ne: movie._id },
+  }).limit(5);
+
+  res.json(recommended);
+});
+
 router.get('/featured', movieController.getFeaturedMovies);
 router.get('/trending', movieController.getTrendingMovies);
 
