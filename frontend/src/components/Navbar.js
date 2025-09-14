@@ -1,33 +1,38 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useContext } from 'react';
-import { AuthContext } from '../context/AuthContext';
-import './Navbar.css'
+// src/components/Navbar.js
+import { Link } from 'react-router-dom';
 
 function Navbar() {
-  const { user, logout } = useContext(AuthContext);
-  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user'));
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
   };
 
   return (
-    <nav style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 20px', background: '#f7f7f7' }}>
-      <div>
-        <Link to="/">MovieReview</Link>
-      </div>
-      <div style={{ display: 'flex', gap: '12px' }}>
-        <Link to="/movies">Movies</Link>
+    <nav style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      background: '#1f2937',
+      padding: '10px 20px',
+      color: 'white',
+      position: 'sticky',
+      top: 0,
+      zIndex: 1000
+    }}>
+      <Link to="/" style={{ fontSize: '20px', fontWeight: 'bold', color: 'white' }}>🎬 MovieHub</Link>
+      <div style={{ display: 'flex', gap: '15px' }}>
+        <Link to="/movies" style={{ color: 'white' }}>Movies</Link>
         {user ? (
           <>
-            <Link to={`/profile/${user._id}`}>{user.username}</Link>
+            <Link to={`/profile/${user._id}`} style={{ color: 'white' }}>Profile</Link>
             <button onClick={handleLogout}>Logout</button>
           </>
         ) : (
           <>
-            <Link to="/login">Login</Link>
-            <Link to="/register">Register</Link>
+            <Link to="/login" style={{ color: 'white' }}>Login</Link>
+            <Link to="/register" style={{ color: 'white' }}>Register</Link>
           </>
         )}
       </div>
